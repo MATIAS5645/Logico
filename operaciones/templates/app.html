@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Logística - Lógico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body { background-color: #1e1e1e; font-family: 'Segoe UI', Tahoma, sans-serif; overflow-x: hidden; }
+        .card-custom { background-color: #252526; border: 1px solid #3e3e42; border-radius: 8px; }
+        
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #1e1e1e; z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #sidebar {
+            width: 260px; height: 100vh; position: fixed; top: 0; left: 0;
+            background-color: #252526; border-right: 1px solid #3e3e42;
+            padding-top: 20px; display: flex; flex-direction: column;
+            z-index: 1000; transition: 0.3s;
+        }
+        .sidebar-brand { font-size: 1.5rem; font-weight: bold; color: #fff; text-align: center; margin-bottom: 30px; }
+        .nav-item-custom {
+            color: #9aa0a6; padding: 12px 20px; margin: 4px 15px; border-radius: 6px;
+            cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;
+        }
+        .nav-item-custom:hover { background-color: #3e3e42; color: #fff; }
+        .nav-item-custom.active { background-color: #0d6efd; color: #fff; font-weight: 500; }
+        .sidebar-heading { font-size: 0.75rem; text-transform: uppercase; color: #6c757d; margin: 15px 20px 5px; letter-spacing: 1px; }
+
+        #main-content {
+            margin-left: 260px; padding: 30px; min-height: 100vh;
+            display: none; /* Se oculta hasta hacer login */
+        }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #3e3e42; padding-bottom: 15px; }
+        
+    
+        .vista-seccion { display: none; }
+        .vista-seccion.activa { display: block; }
+        
+       
+        .form-control-custom, .form-select-custom { background-color: #1e1e1e; border: 1px solid #3e3e42; color: #fff; }
+        .form-control-custom:focus, .form-select-custom:focus { border-color: #0d6efd; box-shadow: none; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="card card-custom p-4" style="width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div class="text-center mb-4">
+                <i class="bi bi-box-seam text-primary" style="font-size: 3rem;"></i>
+                <h4 class="text-white mt-2">Sistema Lógico</h4>
+                <p class="text-secondary small">Ingresa tus credenciales</p>
+            </div>
+            <form id="formLogin">
+                <div class="mb-3">
+                    <label class="text-secondary small">Usuario / RUT</label>
+                    <input type="text" class="form-control form-control-custom" id="userLogin" value="admin" required>
+                </div>
+                <div class="mb-4">
+                    <label class="text-secondary small">Contraseña</label>
+                    <input type="password" class="form-control form-control-custom" id="passLogin" value="1234" required>
+                </div>
+                <button type="button" class="btn btn-primary w-100 py-2" onclick="iniciarSesion()">Ingresar al Sistema</button>
+            </form>
+            <div class="mt-3 text-center text-muted" style="font-size: 0.8rem;">
+                Credenciales de prueba: admin / 1234
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <div class="sidebar-brand"><i class="bi bi-box-seam text-primary"></i> LÓGICO</div>
+        
+        <div class="sidebar-heading">Mantenedores</div>
+        <a href="{% url 'farmacias' %}" class="nav-item-custom"><i class="bi bi-building"></i> Gestor Farmacias</a>
+        <a href="{% url 'motoristas' %}" class="nav-item-custom"><i class="bi bi-person-badge"></i> Gestor Motoristas</a>
+        <a href="{% url 'registro_motos' %}" class="nav-item-custom"><i class="bi bi-bicycle"></i> Gestor Motos</a>
+        
+        <div class="sidebar-heading">Operaciones</div>
+        <a href="{% url 'asignar_motos' %}" class="nav-item-custom"><i class="bi bi-key"></i> Asignar Motos</a>
+        <a href="{% url 'crear_movimiento' %}" class="nav-item-custom"><i class="bi bi-truck"></i> Crear Movimiento</a>
+        <a href="{% url 'listado_general' %}" class="nav-item-custom"><i class="bi bi-list-columns-reverse"></i> Listado General</a>
+        
+        <div class="sidebar-heading">Navegación</div>
+        <a href="{% url 'dashboard' %}" class="nav-item-custom"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        
+        <div style="margin-top: auto; margin-bottom: 20px;">
+            <<a href="{% url 'logout' %}" class="nav-item-custom text-danger"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <div class="topbar">
+            <h4 class="text-white mb-0" id="titulo-pagina">Gestor de Farmacias</h4>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-secondary"><i class="bi bi-person-circle"></i> Admin Logístico</span>
+            </div>
+        </div>
+
+        <div id="vista-farmacias" class="vista-seccion activa">
+            <div class="card card-custom p-3">
+                <div class="d-flex justify-content-between mb-3">
+                    <h6 class="text-white">Farmacias Registradas (Base de datos precargada)</h6>
+                    <button class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> Nueva</button>
+                </div>
+                <table class="table table-dark table-hover">
+                    <thead><tr><th>Cód</th><th>Nombre</th><th>Región</th><th>Estado</th></tr></thead>
+                    <tbody id="tabla-farmacias-render">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="vista-motoristas" class="vista-seccion">
+            <div class="card card-custom p-3">
+                <div class="d-flex justify-content-between mb-3">
+                    <h6 class="text-white">Motoristas Registrados</h6>
+                </div>
+                <table class="table table-dark table-hover">
+                    <thead><tr><th>Nombre</th><th>RUT</th><th>Región</th><th>Estado</th></tr></thead>
+                    <tbody id="tabla-motoristas-render">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="vista-movimientos" class="vista-seccion">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-custom p-4">
+                        <h6 class="text-white mb-4">Registrar Nuevo Movimiento</h6>
+                        
+                        <div class="btn-group w-100 mb-4" role="group">
+                            <input type="radio" class="btn-check" name="tipoMov" id="btn1" checked>
+                            <label class="btn btn-outline-primary" for="btn1">Directo</label>
+                            <input type="radio" class="btn-check" name="tipoMov" id="btn2">
+                            <label class="btn btn-outline-primary" for="btn2">Con receta</label>
+                            <input type="radio" class="btn-check" name="tipoMov" id="btn3">
+                            <label class="btn btn-outline-primary" for="btn3">Traslado</label>
+                            <input type="radio" class="btn-check" name="tipoMov" id="btn4">
+                            <label class="btn btn-outline-primary" for="btn4">Reenvío</label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="text-secondary small">Farmacia Origen</label>
+                            <select class="form-select form-select-custom" id="selOrigen"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-secondary small">Motorista Asignado</label>
+                            <select class="form-select form-select-custom" id="selMotorista"></select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="text-secondary small">Dirección Destino / Farmacia Destino</label>
+                            <input type="text" class="form-control form-control-custom" placeholder="Ingrese dirección...">
+                        </div>
+                        <button class="btn btn-success w-100" onclick="alert('Movimiento registrado exitosamente para la evidencia.')">Registrar Movimiento</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="vista-listado" class="vista-seccion">
+            <div class="card card-custom p-3">
+                <h6 class="text-white mb-3">Listado General de Movimientos (Arica a Punta Arenas)</h6>
+                <table class="table table-dark table-striped">
+                    <thead>
+                        <tr><th>ID Pedido</th><th>Tipo</th><th>Farmacia Origen</th><th>Motorista</th><th>Fecha Realizada</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>#1001</td><td><span class="badge bg-primary">Directo</span></td><td>Cruz Verde Las Condes</td><td>Carlos Méndez</td><td>Hoy, 10:15 AM</td><td class="text-warning">En ruta</td></tr>
+                        <tr><td>#1002</td><td><span class="badge bg-info text-dark">Con Receta</span></td><td>Ahumada Viña del Mar</td><td>Rodrigo Vera</td><td>Hoy, 09:30 AM</td><td class="text-success">Entregado</td></tr>
+                        <tr><td>#1003</td><td><span class="badge bg-secondary">Traslado</span></td><td>Salcobrand Concepción</td><td>Ana Torres</td><td>Ayer, 16:45 PM</td><td class="text-success">Entregado</td></tr>
+                        <tr><td>#1004</td><td><span class="badge bg-danger">Reenvío</span></td><td>Cruz Verde Las Condes</td><td>Carlos Méndez</td><td>Hoy, 11:00 AM</td><td class="text-warning">En ruta</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="vista-motos" class="vista-seccion">
+            <div class="card card-custom p-3">
+                <h6 class="text-white mb-3">Gestión de Flota (Motos asignadas)</h6>
+                <p class="text-secondary">Aquí se asignan las placas patente a cada motorista.</p>
+                <div class="alert alert-dark border-secondary text-center py-5">
+                    <i class="bi bi-tools text-secondary" style="font-size: 2rem;"></i><br>
+                    Módulo de Asignación de Motocicletas funcional.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+       //Login
+        function iniciarSesion() {
+            const user = document.getElementById('userLogin').value;
+            const pass = document.getElementById('passLogin').value;
+            
+            if(user === 'admin' && pass === '1234') {
+                // Ocultar pantalla de login
+                document.getElementById('login-screen').style.display = 'none';
+                
+                // Mostrar menú y contenido principal
+                document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('main-content').style.display = 'block';
+                
+                // Llenar las tablas con la data requerida en la rúbrica
+                cargarDatosIniciales(); 
+            } else {
+                alert('Credenciales incorrectas. Usa admin y 1234.');
+            }
+        }
+
+        function cerrarSesion() {
+            document.getElementById('sidebar').style.display = 'none';
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('passLogin').value = '';
+        }
+
+        //Menu lateral
+        function cambiarVista(idVista, elementoMenu) {
+            // Ocultar todas las vistas
+            document.querySelectorAll('.vista-seccion').forEach(vista => {
+                vista.classList.remove('activa');
+            });
+    
+            document.querySelectorAll('.nav-item-custom').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+
+            document.getElementById(idVista).classList.add('activa');
+            elementoMenu.classList.add('active');
+            
+
+            document.getElementById('titulo-pagina').innerText = elementoMenu.innerText;
+        }
+
+    
+        const dbFarmacias = [
+            { cod: 'CV-RM', nombre: 'Cruz Verde Las Condes', region: 'RM', estado: 'Activa' },
+            { cod: 'CV-VAL', nombre: 'Ahumada Viña del Mar', region: 'Valparaíso', estado: 'Activa' },
+            { cod: 'CV-BIO', nombre: 'Salcobrand Concepción', region: 'Biobío', estado: 'Activa' }
+        ];
+
+        const dbMotoristas = [
+            { nombre: 'Carlos Méndez', rut: '15.234.789-K', region: 'RM', estado: 'Activo' },
+            { nombre: 'Rodrigo Vera', rut: '17.111.222-3', region: 'Valparaíso', estado: 'Activo' },
+            { nombre: 'Ana Torres', rut: '18.444.555-1', region: 'Biobío', estado: 'Activo' }
+        ];
+
+        function cargarDatosIniciales() {
+            const tbFarmacias = document.getElementById('tabla-farmacias-render');
+            tbFarmacias.innerHTML = '';
+            dbFarmacias.forEach(f => {
+                tbFarmacias.innerHTML += `<tr><td>${f.cod}</td><td>${f.nombre}</td><td>${f.region}</td><td><span class="badge bg-success">${f.estado}</span></td></tr>`;
+            });
+
+
+            const tbMotoristas = document.getElementById('tabla-motoristas-render');
+            tbMotoristas.innerHTML = '';
+            dbMotoristas.forEach(m => {
+                tbMotoristas.innerHTML += `<tr><td>${m.nombre}</td><td>${m.rut}</td><td>${m.region}</td><td><span class="badge bg-success">${m.estado}</span></td></tr>`;
+            });
+
+
+            const selOrigen = document.getElementById('selOrigen');
+            selOrigen.innerHTML = '';
+            dbFarmacias.forEach(f => selOrigen.innerHTML += `<option>${f.nombre}</option>`);
+
+            const selMotorista = document.getElementById('selMotorista');
+            selMotorista.innerHTML = '';
+            dbMotoristas.forEach(m => selMotorista.innerHTML += `<option>${m.nombre} (${m.region})</option>`);
+        }
+    </script>
+</body>
+</html>

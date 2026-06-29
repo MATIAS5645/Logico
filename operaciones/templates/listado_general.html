@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Listado General - Lógico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body>
+    <div id="sidebar">
+        <div class="sidebar-brand"><i class="bi bi-box-seam text-primary"></i> LÓGICO</div>
+        
+        <div class="sidebar-heading">Mantenedores</div>
+        <a href="{% url 'farmacias' %}" class="nav-item-custom"><i class="bi bi-building"></i> Gestor Farmacias</a>
+        <a href="{% url 'motoristas' %}" class="nav-item-custom"><i class="bi bi-person-badge"></i> Gestor Motoristas</a>
+        <a href="{% url 'registro_motos' %}" class="nav-item-custom"><i class="bi bi-bicycle"></i> Gestor Motos</a>
+        
+        <div class="sidebar-heading">Operaciones</div>
+        <a href="{% url 'asignar_motos' %}" class="nav-item-custom"><i class="bi bi-key"></i> Asignar Motos</a>
+        <a href="{% url 'crear_movimiento' %}" class="nav-item-custom"><i class="bi bi-truck"></i> Crear Movimiento</a>
+        <a href="{% url 'listado_general' %}" class="nav-item-custom"><i class="bi bi-list-columns-reverse"></i> Listado General</a>
+        
+        <div class="sidebar-heading">Navegación</div>
+        <a href="{% url 'dashboard' %}" class="nav-item-custom"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        
+        <div style="margin-top: auto; margin-bottom: 20px;">
+            <a href="{% url 'logout' %}" class="nav-item-custom text-danger"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <div class="topbar">
+            <h4 class="text-white mb-0">Listado General (Historial de Movimientos)</h4>
+            <span class="badge bg-primary px-3 py-2" id="totalMovs">Total: {{ movimientos|length }}</span>
+        </div>
+        <div class="card card-custom p-3">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle" style="font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo</th>
+                            <th>Origen</th>
+                            <th>Destino Final</th>
+                            <th>Motorista</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaListado">
+                        {% for m in movimientos %}
+                        <tr>
+                            <td><strong>{{ m.numero_pedido }}</strong></td>
+                            <td><span class="badge bg-info text-dark">{{ m.tipo }}</span></td>
+                            
+                            <td>{{ m.origen.nombre }}</td>
+                            
+                            <td>
+                                {{ m.direccion_destino }}
+                                {% if m.comuna_destino %}, {{ m.comuna_destino }}{% endif %}
+                            </td>
+                            
+                            <td>{{ m.motorista.nombre_completo }}</td>
+                            <td class="text-secondary">{{ m.fecha|date:"d/m/Y" }}</td>
+                            
+                            <td>
+                                <span class="badge {% if m.estado == 'Entregado' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                    {{ m.estado }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'eliminar_movimiento' m.id %}" class="btn-icon btn-icon-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar el pedido {{ m.numero_pedido }}? Esta acción no se puede deshacer.');" title="Eliminar Pedido">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-secondary py-4">No hay movimientos registrados en la base de datos.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'app.js' %}"></script>
+</body>
+</html>
