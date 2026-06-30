@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -78,15 +79,15 @@ WSGI_APPLICATION = 'logico_core.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'logico_db',       
-        'USER': 'postgres',        
-        'PASSWORD': 'admin1234', 
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get(
+            'DATABASE_URL', 
+            'postgres://logicodb_user:Qv5RxfioPUM9eHcOeHBXs2ccWlFG28w4@dpg-d91kcuq8qa3s73apipi0-a:5432/logicodb'
+        ),
+        conn_max_age=600
+    )
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
