@@ -6,10 +6,17 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.contrib.auth.models import User # 💡 Asegúrate de tener esta importación al principio del archivo
+from django.contrib.auth.decorators import user_passes_test
+
 import random
+
 
 from .models import Movimiento, Farmacia, Motorista, Motocicleta
 from .serializers import MovimientoSerializer
+
+def es_admin_absoluto(user):
+    # Solo permite la entrada si es el superusuario creador del sistema
+    return user.is_authenticated and user.is_superuser
 
 # --- VISTAS PROTEGIDAS CON LOGIN (PLATAFORMA WEB) ---
 
@@ -19,6 +26,7 @@ def listado_general(request):
     return render(request, 'listado_general.html', {'movimientos': movimientos_db})
 
 @login_required(login_url='login')
+@user_passes_test(es_admin_absoluto, login_url='asignar_pedidos') # 💡 Si entra el despachador, lo rebota a su pantalla de despacho
 def registrar_movimiento(request):
     if request.method == 'POST':
         tipo = request.POST.get('tipoMov')
@@ -52,6 +60,7 @@ def registrar_movimiento(request):
     })
 
 @login_required(login_url='login')
+@user_passes_test(es_admin_absoluto, login_url='asignar_pedidos')
 def gestor_farmacias(request):
     if request.method == 'POST':
         f_id = request.POST.get('f_id_edit') 
@@ -98,6 +107,7 @@ def eliminar_farmacia(request, id):
     return redirect('farmacias')
 
 @login_required(login_url='login')
+@user_passes_test(es_admin_absoluto, login_url='asignar_pedidos')
 def gestor_motoristas(request):
     if request.method == 'POST':
         m_id = request.POST.get('m_id_edit') 
@@ -168,6 +178,7 @@ def eliminar_motorista(request, id):
     return redirect('motoristas')
 
 @login_required(login_url='login')
+@user_passes_test(es_admin_absoluto, login_url='asignar_pedidos')
 def gestor_motos(request):
     if request.method == 'POST':
         moto_id = request.POST.get('moto_id_edit')
@@ -321,3 +332,43 @@ def api_pedidos_motorista(request, motorista_id):
     movimientos = Movimiento.objects.filter(motorista_id=motorista_id).exclude(estado='Entregado')
     serializer = MovimientoSerializer(movimientos, many=True)
     return Response(serializer.data)
+def es_miembro_despacho(user):
+    # Permite la entrada si es administrador absoluto O si pertenece al grupo 'Despachadores'
+    return user.is_authenticated and (user.is_superuser or user.groups.filter(name='Despachadores').exists())
+def es_despachador(user):
+    return user.is_authenticated and (user.is_superuser or user.groups.filter(name='Despachadores').exists())
+@login_required(login_url='login')
+@user_passes_test(es_miembro_despacho, login_url='listado_general')
+def asignar_pedidos(request):
+    if request.method == 'POST':
+        pedido_id = request.POST.get('pedido_id')
+        motorista_id = request.POST.get('motorista_id')
+
+        if pedido_id and motorista_id:
+            try:
+                pedido = Movimiento.objects.get(id=pedido_id)
+                motorista = Motorista.objects.get(id=motorista_id)
+                
+                # Asignamos el motorista al pedido y nos aseguramos de que quede 'En ruta'
+                pedido.motorista = motorista
+                pedido.estado = 'En ruta'
+                pedido.save()
+                
+                messages.success(request, f'Pedido {pedido.numero_pedido} asignado con éxito a {motorista.nombre_completo}.')
+            except Exception as e:
+                messages.error(request, f'Error al asignar el pedido: {str(e)}')
+        else:
+            messages.error(request, 'Faltan datos obligatorios para realizar la asignación.')
+            
+        return redirect('asignar_pedidos')
+
+    # Filtramos los movimientos que NO tengan un motorista asignado o estén pendientes
+    pedidos_pendientes = Movimiento.objects.filter(motorista__isnull=True).order_by('-id')
+    
+    # Traemos solo los motoristas que estén activos en el sistema para desplegarlos en el select
+    motoristas_activos = Motorista.objects.filter(estado='Activo').order_by('nombre_completo')
+
+    return render(request, 'asignar_pedidos.html', {
+        'pedidos': pedidos_pendientes,
+        'motoristas': motoristas_activos
+    })
