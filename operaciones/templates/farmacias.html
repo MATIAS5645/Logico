@@ -39,19 +39,36 @@
         <div class="row g-4">
             <div class="col-lg-8">
                 <div class="card card-custom p-3 h-100">
+                    
+                    <div class="bg-dark p-3 rounded mb-3 border border-secondary">
+                        <h6 class="text-secondary mb-2"><i class="bi bi-funnel-fill"></i> Filtrar Sucursales</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control form-control-sm" id="filtroRegion" placeholder="Buscar por Región..." onkeyup="filtrarTabla()">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control form-control-sm" id="filtroProvincia" placeholder="Buscar por Provincia..." onkeyup="filtrarTabla()">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control form-control-sm" id="filtroComuna" placeholder="Buscar por Comuna..." onkeyup="filtrarTabla()">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="text-white mb-0"><i class="bi bi-list-ul"></i> Listado de Sucursales</h6>
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-dark table-hover align-middle" style="font-size: 0.9rem;">
+                        <table class="table table-dark table-hover align-middle" style="font-size: 0.9rem;" id="tablaFarmaciasCompleta">
                             <thead>
                                 <tr>
                                     <th>Cód.</th>
                                     <th>Nombre</th>
                                     <th>Dirección</th>
                                     <th>Comuna</th>
-                                    <th>Provincia</th> <th>Región</th>
+                                    <th>Provincia</th>
+                                    <th>Región</th>
                                     <th>Teléfono</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
@@ -59,12 +76,13 @@
                             </thead>
                             <tbody id="tablaFarmacias">
                                 {% for f in farmacias %}
-                                <tr>
+                                <tr data-region="{{ f.region|lower }}" data-provincia="{{ f.provincia|lower }}" data-comuna="{{ f.comuna|lower }}">
                                     <td><strong>{{ f.codigo }}</strong></td>
                                     <td>{{ f.nombre }}</td>
                                     <td><small class="text-secondary">{{ f.direccion|default:"-" }}</small></td>
                                     <td>{{ f.comuna }}</td>
-                                    <td>{{ f.provincia }}</td> <td>{{ f.region }}</td>
+                                    <td>{{ f.provincia }}</td>
+                                    <td>{{ f.region }}</td>
                                     <td><small class="text-info">{{ f.telefono|default:"-" }}</small></td>
                                     <td>
                                         <span class="badge {% if f.estado == 'Activa' %}bg-success{% else %}bg-secondary{% endif %}">
@@ -155,13 +173,37 @@
 
     <script src="{% static 'app.js' %}"></script>
     <script>
+        // 🚀 FUNCIÓN DE FILTRADO COMBINADO EN TIEMPO REAL
+        function filtrarTabla() {
+            // Obtenemos lo que escribió el usuario en minúsculas
+            const valRegion = document.getElementById('filtroRegion').value.toLowerCase();
+            const valProvincia = document.getElementById('filtroProvincia').value.toLowerCase();
+            const valComuna = document.getElementById('filtroComuna').value.toLowerCase();
+            
+            // Obtenemos todas las filas de la tabla
+            const filas = document.querySelectorAll('#tablaFarmacias tr');
+
+            filas.forEach(fila => {
+                // Leemos las propiedades geográficas guardadas en los atributos del HTML
+                const reg = fila.getAttribute('data-region') || '';
+                const prov = fila.getAttribute('data-provincia') || '';
+                const com = fila.getAttribute('data-comuna') || '';
+
+                if (reg.includes(valRegion) && prov.includes(valProvincia) && com.includes(valComuna)) {
+                    fila.style.display = ''; // Muestra la fila
+                } else {
+                    fila.style.display = 'none'; // Oculta la fila
+                }
+            });
+        }
+
         function editarFarmacia(id, codigo, nombre, direccion, region, provincia, comuna, telefono, estado) {
             document.getElementById('f_id_edit').value = id;
             document.getElementById('f_codigo').value = codigo;
             document.getElementById('f_nombre').value = nombre;
             document.getElementById('f_direccion').value = direccion;
             document.getElementById('f_region').value = region;
-            document.getElementById('f_provincia').value = provincia; // 👈 Mantiene provincia en el formulario al editar
+            document.getElementById('f_provincia').value = provincia; 
             document.getElementById('f_comuna').value = comuna;
             document.getElementById('f_telefono').value = telefono;
             document.getElementById('f_estado').value = estado;
@@ -179,7 +221,7 @@
             document.getElementById('f_nombre').value = '';
             document.getElementById('f_direccion').value = '';
             document.getElementById('f_region').value = '';
-            document.getElementById('f_provincia').value = ''; // 👈 Limpia provincia al cancelar
+            document.getElementById('f_provincia').value = ''; 
             document.getElementById('f_comuna').value = '';
             document.getElementById('f_telefono').value = '';
             document.getElementById('f_estado').value = 'Activa';

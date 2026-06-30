@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User # 💡 Importamos el modelo de usuarios
 
 class Farmacia(models.Model):
     codigo = models.CharField(max_length=20, unique=True, verbose_name="Código")
@@ -24,6 +25,7 @@ class Motocicleta(models.Model):
         return f"{self.patente} ({self.marca} {self.modelo})"
 
 class Motorista(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='motorista_perfil', null=True, blank=True)
     rut = models.CharField(max_length=12, unique=True, verbose_name="RUT")
     nombre_completo = models.CharField(max_length=150)
     region = models.CharField(max_length=100, verbose_name="Región")

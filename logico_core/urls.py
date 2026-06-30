@@ -22,4 +22,5 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     # RUTA DE LA API MÓVIL
     path('api/pedidos/<int:motorista_id>/', views.api_pedidos_motorista, name='api_pedidos_motorista'),
+    path('api/login/', views.api_login_motorista, name='api_login_motorista'),
 ]

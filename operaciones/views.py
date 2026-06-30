@@ -2,13 +2,16 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import Movimiento, Farmacia, Motorista, Motocicleta
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import MovimientoSerializer
+from django.contrib.auth.models import User # 💡 Asegúrate de tener esta importación al principio del archivo
 import random
 
-# --- VISTAS PROTEGIDAS CON LOGIN ---
+from .models import Movimiento, Farmacia, Motorista, Motocicleta
+from .serializers import MovimientoSerializer
+
+# --- VISTAS PROTEGIDAS CON LOGIN (PLATAFORMA WEB) ---
 
 @login_required(login_url='login')
 def listado_general(request):
@@ -57,8 +60,8 @@ def gestor_farmacias(request):
         direccion = request.POST.get('direccion')
         region = request.POST.get('region')
         provincia = request.POST.get('provincia')
-        comuna = request.POST.get('comuna')  # 👈 Captura Comuna
-        telefono = request.POST.get('telefono')  # 👈 Captura Teléfono
+        comuna = request.POST.get('comuna')  
+        telefono = request.POST.get('telefono')  
         estado = request.POST.get('estado')
 
         if f_id:
@@ -68,8 +71,8 @@ def gestor_farmacias(request):
             farmacia.direccion = direccion
             farmacia.region = region
             farmacia.provincia = provincia
-            farmacia.comuna = comuna  # 👈 Actualiza Comuna
-            farmacia.telefono = telefono  # 👈 Actualiza Teléfono
+            farmacia.comuna = comuna  
+            farmacia.telefono = telefono  
             farmacia.estado = estado
             farmacia.save()
         else:
@@ -79,8 +82,8 @@ def gestor_farmacias(request):
                 direccion=direccion,
                 region=region,
                 provincia=provincia,
-                comuna=comuna,  # 👈 Crea con Comuna
-                telefono=telefono,  # 👈 Crea con Teléfono
+                comuna=comuna,  
+                telefono=telefono,  
                 estado=estado
             )
         return redirect('farmacias')
@@ -105,6 +108,7 @@ def gestor_motoristas(request):
         estado = request.POST.get('estado')
 
         if m_id:
+            # --- MODO EDICIÓN: Solo actualiza los datos del motorista ---
             motorista = Motorista.objects.get(id=m_id)
             motorista.rut = rut
             motorista.nombre_completo = nombre
@@ -112,14 +116,46 @@ def gestor_motoristas(request):
             motorista.provincia = provincia
             motorista.estado = estado
             motorista.save()
+            messages.success(request, f'Motorista {nombre} actualizado correctamente.')
         else:
+            # --- MODO CREACIÓN AUTOMÁTICA ---
+            
+            # 1. Generar Username limpio (ejemplo: "Thomas Silva" -> "thomassilva")
+            username_automatico = "".join(nombre.split()).lower()
+            
+            # 2. Evitar duplicados de usuario si dos personas se llaman igual
+            base_username = username_automatico
+            contador = 1
+            while User.objects.filter(username=username_automatico).exists():
+                username_automatico = f"{base_username}{contador}"
+                contador += 1
+
+            # 3. Generar Contraseña (limpia los puntos/guiones del RUT y toma los primeros 6 números)
+            rut_limpio = rut.replace(".", "").replace("-", "")
+            password_automatica = rut_limpio[:6] if len(rut_limpio) >= 6 else "logico123"
+
+            # 4. Crear el Usuario en el sistema de seguridad de Django
+            nuevo_usuario = User.objects.create_user(
+                username=username_automatico,
+                password=password_automatica
+            )
+
+            # 5. Crear el perfil del Motorista y asociarle el usuario recién creado
             Motorista.objects.create(
+                user=nuevo_usuario, # 💡 Queda enlazado de inmediato para la App Móvil
                 rut=rut,
                 nombre_completo=nombre,
                 region=region,
                 provincia=provincia,
                 estado=estado
             )
+            
+            # Mostramos un mensaje flotante en la web con las credenciales creadas
+            messages.success(
+                request, 
+                f'¡Motorista creado! Usuario de App: {username_automatico} | Contraseña: {password_automatica}'
+            )
+            
         return redirect('motoristas')
 
     motoristas_db = Motorista.objects.all().order_by('id')
@@ -176,7 +212,6 @@ def asignar_motos(request):
             
             if moto_id:
                 moto = Motocicleta.objects.get(id=moto_id)
-                
                 dueno_actual = Motorista.objects.filter(motocicleta=moto).exclude(id=motorista.id).first()
                 
                 if dueno_actual:
@@ -207,7 +242,7 @@ def eliminar_movimiento(request, id):
     movimiento.delete()
     return redirect('listado_general')
 
-# --- VISTAS LIBRES (No requieren estar logueado para verlas) ---
+# --- VISTAS LIBRES (AUTENTICACIÓN WEB) ---
 
 def iniciar_sesion(request):
     if request.method == 'POST':
@@ -230,17 +265,14 @@ def cerrar_sesion(request):
 
 @login_required(login_url='login')
 def dashboard(request):
-    # Contamos los movimientos según su estado
     total_pedidos = Movimiento.objects.count()
     en_ruta = Movimiento.objects.filter(estado='En ruta').count()
     entregados = Movimiento.objects.filter(estado='Entregado').count()
     
-    # Contamos los recursos de los mantenedores
     total_farmacias = Farmacia.objects.filter(estado='Activa').count()
     total_motoristas = Motorista.objects.filter(estado='Activo').count()
     total_motos = Motocicleta.objects.count()
     
-    # Traemos solo los últimos 5 movimientos para mostrar una sección de "Actividad Reciente"
     movimientos_recientes = Movimiento.objects.all().order_by('-id')[:5]
     
     contexto = {
@@ -253,15 +285,39 @@ def dashboard(request):
         'recientes': movimientos_recientes,
     }
     return render(request, 'dashboard.html', contexto)
-# --- API PARA LA APLICACIÓN MÓVIL ---
+
+
+# --- API ENDPOINTS PARA LA APLICACIÓN MÓVIL ---
+
+@api_view(['POST'])
+@csrf_exempt
+def api_login_motorista(request):
+    usuario = request.data.get('username')
+    contrasena = request.data.get('password')
+    
+    user = authenticate(username=usuario, password=contrasena)
+    
+    if user is not None:
+        try:
+            motorista = user.motorista_perfil
+            return Response({
+                'success': True,
+                'motorista_id': motorista.id,
+                'nombre': motorista.nombre_completo
+            })
+        except Exception:
+            return Response({
+                'success': False, 
+                'error': 'Este usuario no tiene un perfil de motorista asignado en el panel Admin.'
+            })
+    else:
+        return Response({
+            'success': False,
+            'error': 'Usuario o contraseña incorrectos en el sistema Django.'
+        })
 
 @api_view(['GET'])
 def api_pedidos_motorista(request, motorista_id):
-    # Buscamos los pedidos asignados a este motorista que NO estén "Entregados"
     movimientos = Movimiento.objects.filter(motorista_id=motorista_id).exclude(estado='Entregado')
-    
-    # Pasamos los datos por el "traductor" que creamos
     serializer = MovimientoSerializer(movimientos, many=True)
-    
-    # Devolvemos un JSON puro
     return Response(serializer.data)
