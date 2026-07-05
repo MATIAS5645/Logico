@@ -5,9 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.contrib.auth.models import User # 💡 Asegúrate de tener esta importación al principio del archivo
+from django.contrib.auth.models import User 
 from django.contrib.auth.decorators import user_passes_test
-
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Incidencia, Movimiento
 import random
 
 
@@ -372,3 +378,61 @@ def asignar_pedidos(request):
         'pedidos': pedidos_pendientes,
         'motoristas': motoristas_activos
     })
+
+@login_required
+def panel_incidencias(request):
+    # El despachador ve todas las incidencias, las más recientes primero
+    incidencias = Incidencia.objects.all().order_by('-fecha_reporte')
+    
+    if request.method == 'POST':
+        # Lógica por si se reporta una incidencia desde la web (o testing)
+        movimiento_id = request.POST.get('movimiento_id')
+        tipo = request.POST.get('tipo')
+        descripcion = request.POST.get('descripcion')
+        
+        movimiento = get_object_or_404(Movimiento, id=movimiento_id)
+        
+        Incidencia.objects.create(
+            movimiento=movimiento,
+            motorista=request.user,
+            tipo=tipo,
+            descripcion=descripcion
+        )
+        # Opcional: Cambiar el estado del pedido a 'RETRASADO' o 'CON_PROBLEMAS'
+        movimiento.estado = 'CON_PROBLEMAS' 
+        movimiento.save()
+        
+        messages.success(request, "Incidencia reportada con éxito.")
+        return redirect('panel_incidencias')
+
+    return render(request, 'incidencias.html', {'incidencias': incidencias})
+
+@login_required
+def cambiar_estado_incidencia(request, incidencia_id, nuevo_estado):
+    # Permite al despachador gestionar y solucionar el problema
+    incidencia = get_object_or_404(Incidencia, id=incidencia_id)
+    incidencia.estado = nuevo_estado
+    incidencia.save()
+    messages.info(request, f"Incidencia #{incidencia_id} actualizada a {nuevo_estado}.")
+    return redirect('panel_incidencias')
+
+@api_view(['POST'])
+def confirmar_entrega(request, pk):
+    try:
+        # Buscamos el pedido/movimiento por su ID
+        movimiento = Movimiento.objects.get(pk=pk)
+        
+        # Cambiamos el estado al valor que tengas definido para entregado (ej: 'ENTREGADO')
+        movimiento.estado = 'ENTREGADO'
+        movimiento.save()
+        
+        return Response({
+            'status': 'success',
+            'message': f'Pedido #{pk} confirmado como entregado exitosamente.'
+        }, status=status.HTTP_200_OK)
+        
+    except Movimiento.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'El pedido no existe.'
+        }, status=status.HTTP_404_NOT_FOUND)

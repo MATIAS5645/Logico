@@ -1,0 +1,80 @@
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <title>Farmacias - Lógico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+{% block content %}
+<div class="container-fluid mt-4 text-white">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🚨 Control de Incidencias en Trayecto</h2>
+        <span class="badge bg-danger fs-5">Alertas Activas</span>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-info bg-dark text-info border-info">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card bg-dark border-secondary p-3">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID Pedido</th>
+                                <th>Motorista</th>
+                                <th>Tipo de Alerta</th>
+                                <th>Detalles del Imprevisto</th>
+                                <th>Hora Reporte</th>
+                                <th>Estado Actual</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inc in incidencias %}
+                            <tr>
+                                <td><strong>#{{ inc.movimiento.id }}</strong></td>
+                                <td>{{ inc.motorista.username }}</td>
+                                <td>
+                                    {% if inc.tipo == 'ACCIDENTE' or inc.tipo == 'PANA' %}
+                                        <span class="badge bg-danger text-uppercase">{{ inc.get_tipo_display }}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark text-uppercase">{{ inc.get_tipo_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><p class="mb-0 text-secondary" style="max-width: 300px;">{{ inc.descripcion }}</p></td>
+                                <td>{{ inc.fecha_reporte|date:"H:i - d/m" }}</td>
+                                <td>
+                                    {% if inc.estado == 'PENDIENTE' %}
+                                        <span class="badge rounded-pill bg-light text-dark">⚠️ {{ inc.get_estado_display }}</span>
+                                    {% elif inc.estado == 'EN_PROCESO' %}
+                                        <span class="badge rounded-pill bg-info text-dark">⚙️ {{ inc.get_estado_display }}</span>
+                                    {% else %}
+                                        <span class="badge rounded-pill bg-success">✅ {{ inc.get_estado_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'cambiar_estado_incidencia' inc.id 'EN_PROCESO' %}" class="btn btn-outline-info">Atender</a>
+                                        <a href="{% url 'cambiar_estado_incidencia' inc.id 'RESUELTO' %}" class="btn btn-outline-success">Resolver</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Rutas limpias. No se registran incidencias en este momento.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

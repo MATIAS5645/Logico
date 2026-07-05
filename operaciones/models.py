@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import User # 💡 Importamos el modelo de usuarios
+from django.contrib.auth.models import User 
 
 class Farmacia(models.Model):
     codigo = models.CharField(max_length=20, unique=True, verbose_name="Código")
@@ -69,3 +69,29 @@ class Movimiento(models.Model):
 
     def __str__(self):
         return f"{self.numero_pedido} hacia {self.direccion_destino}"
+    
+class Incidencia(models.Model):
+    TIPO_CHOICES = [
+        ('PANA', 'Pana / Falla Mecánica'),
+        ('ACCIDENTE', 'Accidente de Tránsito'),
+        ('CLIMA', 'Problemas Climáticos'),
+        ('CLIENTE', 'Cliente no responde / Dirección Incorrecta'),
+        ('OTRO', 'Otro Imprevisto'),
+    ]
+    
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente / Sin Revisar'),
+        ('EN_PROCESO', 'En Proceso de Solución'),
+        ('RESUELTO', 'Resuelto'),
+    ]
+
+    # Usar 'Movimiento' con comillas evita tener que importarlo arriba y rompe el bucle
+    movimiento = models.ForeignKey('Movimiento', on_delete=models.CASCADE, related_name='incidencias')
+    motorista = models.ForeignKey(User, on_delete=models.CASCADE)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    descripcion = models.TextField(verbose_name="Detalles del problema")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    fecha_reporte = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - Pedido #{self.movimiento.id}"
