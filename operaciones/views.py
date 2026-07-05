@@ -443,7 +443,8 @@ def generar_reporte_mensual_pdf(request):
     primer_dia_mes = hoy.replace(day=1)
     
     # 2. Filtrar los datos en PostgreSQL
-    pedidos_del_mes = Movimiento.objects.filter(fecha__gte=primer_dia_mes)    totales = pedidos_del_mes.count()
+    pedidos_del_mes = Movimiento.objects.filter(fecha__gte=primer_dia_mes)    
+    totales = pedidos_del_mes.count()
     entregados = pedidos_del_mes.filter(estado__iexact='ENTREGADO').count()
     en_ruta = pedidos_del_mes.filter(estado__iexact='En ruta').count()
     
