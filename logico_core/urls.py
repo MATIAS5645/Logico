@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from operaciones import views
-from . import views
+from operaciones import views as operaciones_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
