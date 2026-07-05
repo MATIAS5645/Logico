@@ -415,7 +415,7 @@ def cambiar_estado_incidencia(request, incidencia_id, nuevo_estado):
     incidencia.save()
     messages.info(request, f"Incidencia #{incidencia_id} actualizada a {nuevo_estado}.")
     return redirect('panel_incidencias')
-
+@csrf_exempt
 @api_view(['POST'])
 def confirmar_entrega(request, pk):
     try:
