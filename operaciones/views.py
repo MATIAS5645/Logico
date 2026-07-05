@@ -539,4 +539,4 @@ def crear_incidencia(request):
     else:
         form = IncidenciaForm()
     
-    return render(request, 'operaciones/crear_incidencia.html', {'form': form})
+    return render(request, 'crear_incidencia.html', {'form': form})
