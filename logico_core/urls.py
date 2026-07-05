@@ -26,7 +26,7 @@ urlpatterns = [
     path('api/login/', views.api_login_motorista, name='api_login_motorista'),
     path('asignar-pedidos/', views.asignar_pedidos, name='asignar_pedidos'),
     path('incidencias/', views.listado_incidencias, name='listado_incidencias'),
-    path('incidencias/estado/<int:incidencia_id>/<str:nuevo_estado>/', views.cambiar_estado_incidencia, name='cambiar_estado_incidencia'),
+    path('incidencias/crear/', views.crear_incidencia, name='crear_incidencia'),
     path('api/movimientos/<int:pk>/confirmar/', views.confirmar_entrega, name='api_confirmar_entrega'),
     path('reportes/mensual/pdf/', views.generar_reporte_mensual_pdf, name='descargar_reporte_mensual'),
 ]

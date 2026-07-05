@@ -21,6 +21,7 @@ from reportlab.lib import colors
 import datetime
 from .models import Incidencia 
 from django.http import HttpResponse
+from .forms import IncidenciaForm
 import random
 
 
@@ -527,3 +528,15 @@ def listado_incidencias(request):
         'resueltas': resueltas,
     }
     return render(request, 'incidencias.html', context)
+
+@login_required
+def crear_incidencia(request):
+    if request.method == 'POST':
+        form = IncidenciaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('listado_incidencias') # Redirige al historial tras guardar
+    else:
+        form = IncidenciaForm()
+    
+    return render(request, 'operaciones/crear_incidencia.html', {'form': form})
