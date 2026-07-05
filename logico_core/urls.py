@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from operaciones import views
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,4 +28,5 @@ urlpatterns = [
     path('incidencias/', views.panel_incidencias, name='panel_incidencias'),
     path('incidencias/estado/<int:incidencia_id>/<str:nuevo_estado>/', views.cambiar_estado_incidencia, name='cambiar_estado_incidencia'),
     path('api/movimientos/<int:pk>/confirmar/', views.confirmar_entrega, name='api_confirmar_entrega'),
+    path('reportes/mensual/pdf/', views.generar_reporte_mensual_pdf, name='descargar_reporte_mensual'),
 ]

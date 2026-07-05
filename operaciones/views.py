@@ -14,6 +14,12 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Incidencia, Movimiento
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+import datetime
+from django.http import HttpResponse
 import random
 
 
@@ -429,3 +435,73 @@ def confirmar_entrega(request, pk):
         
     except Movimiento.DoesNotExist:
         return Response({'error': 'Pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    
+@login_required
+def generar_reporte_mensual_pdf(request):
+    # 1. Obtener el mes y año actual de forma automática
+    hoy = datetime.date.today()
+    primer_dia_mes = hoy.replace(day=1)
+    
+    # 2. Filtrar los datos en PostgreSQL
+    pedidos_del_mes = Movimiento.objects.filter(fecha_creacion__gte=primer_dia_mes)
+    totales = pedidos_del_mes.count()
+    entregados = pedidos_del_mes.filter(estado__iexact='ENTREGADO').count()
+    en_ruta = pedidos_del_mes.filter(estado__iexact='En ruta').count()
+    
+    # Contar incidencias ocurridas en el mes
+    incidencias_del_mes = Incidencia.objects.filter(fecha_reporte__gte=primer_dia_mes).count()
+
+    # 3. Configurar la respuesta HTTP para forzar la descarga del PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Reporte_Logistico_{hoy.strftime("%m_%Y")}.pdf"'
+
+    # 4. Construir el documento PDF con ReportLab
+    doc = SimpleDocTemplate(response, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    story = []
+    
+    # Estilos de texto
+    styles = getSampleStyleSheet()
+    style_titulo = ParagraphStyle(
+        'TituloReporte',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#1E1E1E'),
+        spaceAfter=12
+    )
+    style_normal = styles['Normal']
+
+    # Encabezado del PDF
+    story.append(Paragraph(f"📊 Reporte Mensual de Operaciones - {hoy.strftime('%B %Y')}", style_titulo))
+    story.append(Paragraph(f"Generado el: {hoy.strftime('%d/%m/%Y a las %H:%M')}", style_normal))
+    story.append(Spacer(1, 20))
+
+    # Tabla de Métricas de Rendimiento Clave (KPIs)
+    datos_kpi = [
+        ['Métrica Logística', 'Cantidad'],
+        ['Total Pedidos Procesados', str(totales)],
+        ['Entregas Confirmadas (App)', str(entregados)],
+        ['Pedidos en Ruta Activa', str(en_ruta)],
+        ['Alertas / Incidencias Reportadas', str(incidencias_del_mes)]
+    ]
+    
+    tabla_kpi = Table(datos_kpi, colWidths=[250, 150])
+    tabla_kpi.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (1, 0), colors.HexColor('#0D6EFD')), # Azul corporativo LÓGICO
+        ('TEXTCOLOR', (0, 0), (1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#DEE2E6')),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('PADDING', (0, 0), (-1, -1), 6),
+    ]))
+    
+    story.append(Paragraph("<b>Resumen de Rendimiento del Mes</b>", styles['Heading2']))
+    story.append(Spacer(1, 8))
+    story.append(tabla_kpi)
+    
+    # Generar el PDF final
+    doc.build(story)
+    return response

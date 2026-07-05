@@ -81,6 +81,13 @@
                         <tr>
                             <td colspan="8" class="text-center text-secondary py-4">No hay movimientos registrados en la base de datos.</td>
                         </tr>
+                            <a href="{% url 'descargar_reporte_mensual' %}" class="btn btn-outline-info d-inline-flex align-items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-pdf-fill" viewBox="0 0 16 16">
+                                    <path d="M5.523 12.424c.14-.082.293-.162.459-.238a7.878 7.878 0 0 1-.45.606c-.28.33-.52.425-.663.425v-.006c0-.052.085-.246.654-.786zm1.135-1.15a10.8 10.8 0 0 0 1.032-.774c-.437.03-.816.03-1.032.03-.143 0-.241-.002-.304-.006a6.116 6.116 0 0 1 .304.75zm2.24-.98c.356-.139.78-.32 1.135-.492a10.88 10.88 0 0 0-.68.68 5.751 5.751 0 0 1-.455-.188zM9.16 8.474c.337-.731.564-1.476.63-2.117A1.53 1.53 0 0 0 9.625 5c-.266 0-.442.234-.442.548 0 .401.238.994.634 1.777z"/>
+                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                                </svg>
+                                Descargar Reporte Mensual (PDF)
+                            </a>
                         {% endfor %}
                     </tbody>
                 </table>
