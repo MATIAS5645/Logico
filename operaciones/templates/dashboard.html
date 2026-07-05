@@ -12,7 +12,6 @@
     <div id="sidebar">
         <div class="sidebar-brand"><i class="bi bi-box-seam text-primary"></i> LÓGICO</div>
         
-        
         <div class="sidebar-heading">Mantenedores</div>
         <a href="{% url 'farmacias' %}" class="nav-item-custom"><i class="bi bi-building"></i> Gestor Farmacias</a>
         <a href="{% url 'motoristas' %}" class="nav-item-custom"><i class="bi bi-person-badge"></i> Gestor Motoristas</a>
@@ -32,9 +31,16 @@
     </div>
 
     <div id="main-content">
-        <div class="topbar">
-            <h4 class="text-white mb-0">Panel de Control General</h4>
-            <span class="text-secondary"><i class="bi bi-calendar3"></i> Resumen Logístico en Vivo</span>
+        <div class="topbar d-flex align-items-center justify-content-between">
+            <div>
+                <h4 class="text-white mb-0">Panel de Control General</h4>
+                <span class="text-secondary"><i class="bi bi-calendar3"></i> Resumen Logístico en Vivo</span>
+            </div>
+            
+            <a href="{% url 'descargar_reporte_mensual' %}" class="btn btn-outline-info d-flex align-items-center gap-2 btn-sm px-3">
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+                <span>Descargar Reporte Mensual</span>
+            </a>
         </div>
         
         <div class="row g-3 mb-4">
@@ -137,7 +143,7 @@
                                 {% empty %}
                                 <tr>
                                     <td colspan="5" class="text-center text-secondary py-3">No hay operaciones recientes en la base de datos.</td>
-                                endfor
+                                </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
