@@ -112,8 +112,8 @@
                             <td>{{ inc.motorista.nombre }}</td>
                             <td><span class="text-light">{{ inc.descripcion }}</span></td>
                             <td>
-                                <span class="badge {% if inc.nivel == 'Critica' %}bg-danger{% elif inc.nivel == 'Media' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
-                                    {{ inc.nivel }}
+                                <span class="badge {% if inc.tipo == 'Critica' %}bg-danger{% elif inc.tipo == 'Media' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
+                                    {{ inc.tipo }}
                                 </span>
                             </td>
                             <td>

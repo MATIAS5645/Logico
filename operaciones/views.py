@@ -515,7 +515,7 @@ def listado_incidencias(request):
     
     # 2. Calcular métricas rápidas para los KPIs superiores
     total_incidencias = incidencias.count()
-    criticas = incidencias.filter(nivel__iexact='Critica').count()
+    criticas = incidencias.filter(tipo__iexact='Critica').count()
     pendientes = incidencias.filter(estado__iexact='Pendiente').count()
     resueltas = incidencias.filter(estado__iexact='Resuelta').count()
 
