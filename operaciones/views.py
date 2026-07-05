@@ -19,6 +19,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 import datetime
+from .models import Incidencia 
 from django.http import HttpResponse
 import random
 
@@ -505,3 +506,24 @@ def generar_reporte_mensual_pdf(request):
     # Generar el PDF final
     doc.build(story)
     return response
+
+@login_required
+def listado_incidencias(request):
+    # 1. Obtener todas las incidencias ordenadas por la más reciente
+    # (Si tu campo no se llama 'fecha_reporte', cámbialo por 'fecha')
+    incidencias = Incidencia.objects.all().order_by('-fecha_reporte')
+    
+    # 2. Calcular métricas rápidas para los KPIs superiores
+    total_incidencias = incidencias.count()
+    criticas = incidencias.filter(nivel__iexact='Critica').count()
+    pendientes = incidencias.filter(estado__iexact='Pendiente').count()
+    resueltas = incidencias.filter(estado__iexact='Resuelta').count()
+
+    context = {
+        'incidencias': incidencias,
+        'total_incidencias': total_incidencias,
+        'criticas': criticas,
+        'pendientes': pendientes,
+        'resueltas': resueltas,
+    }
+    return render(request, 'operaciones/incidencias.html', context)
