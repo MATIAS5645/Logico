@@ -526,4 +526,4 @@ def listado_incidencias(request):
         'pendientes': pendientes,
         'resueltas': resueltas,
     }
-    return render(request, 'operaciones/incidencias.html', context)
+    return render(request, 'incidencias.html', context)
