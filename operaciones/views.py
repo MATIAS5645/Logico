@@ -415,24 +415,17 @@ def cambiar_estado_incidencia(request, incidencia_id, nuevo_estado):
     incidencia.save()
     messages.info(request, f"Incidencia #{incidencia_id} actualizada a {nuevo_estado}.")
     return redirect('panel_incidencias')
-@csrf_exempt
+@csrf_exempt  # Evita el bloqueo de seguridad 403 en apps móviles
 @api_view(['POST'])
 def confirmar_entrega(request, pk):
     try:
-        # Buscamos el pedido/movimiento por su ID
-        movimiento = Movimiento.objects.get(pk=pk)
+        # Django busca automáticamente en la columna 'id' (bigint)
+        pedido = Movimiento.objects.get(pk=pk)
+        pedido.estado = 'ENTREGADO'
+        pedido.save()
         
-        # Cambiamos el estado al valor que tengas definido para entregado (ej: 'ENTREGADO')
-        movimiento.estado = 'ENTREGADO'
-        movimiento.save()
-        
-        return Response({
-            'status': 'success',
-            'message': f'Pedido #{pk} confirmado como entregado exitosamente.'
-        }, status=status.HTTP_200_OK)
+        # Enviamos un diccionario plano para asegurar compatibilidad total
+        return Response({'status': 'ok'}, status=status.HTTP_200_OK)
         
     except Movimiento.DoesNotExist:
-        return Response({
-            'status': 'error',
-            'message': 'El pedido no existe.'
-        }, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)
