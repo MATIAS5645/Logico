@@ -574,34 +574,36 @@ def crear_incidencia_movil(request):
             movimiento = Movimiento.objects.get(id=mov_id)
             motorista = Motorista.objects.get(id=motorista_id)
 
-            # 3. Logística Inversa Automática
+            # 3. Logística Inversa y Mapeo de Tipo
             if motivo == "cliente_ausente":
                 movimiento.estado = 'Reenviado'
                 movimiento.save()
+                tipo_incidencia = 'CLIENTE' # Coincide con las opciones de models.py
+            else:
+                tipo_incidencia = 'OTRO'
 
-            # 4. Persistencia del Historial (Esto es lo que hace que aparezca en tu web)
+            # 4. Persistencia del Historial (CORREGIDO)
             nueva_incidencia = Incidencia.objects.create(
                 movimiento=movimiento,
-                motorista=motorista,
-                motivo=motivo,
-                descripcion=descripcion,
-                severidad='Media'
+                motorista=motorista.user,  # 💡 CORRECCIÓN 1: Pasamos la cuenta de Usuario, no el perfil
+                tipo=tipo_incidencia,      # 💡 CORRECCIÓN 2: Usamos "tipo" y los códigos correctos ('CLIENTE'/'OTRO')
+                descripcion=descripcion
+                # 💡 CORRECCIÓN 3: Quitamos "severidad" porque no existe en la BD
             )
 
             # 5. Respuesta exitosa HTTP 201 (Created)
             return JsonResponse({
                 'status': 'success', 
-                'message': 'Incidencia registrada y pedido actualizado a Reenviado.',
+                'message': 'Incidencia registrada y pedido actualizado.',
                 'incidencia_id': nueva_incidencia.id
             }, status=201)
 
-        # Manejo de errores según la documentación
+        # Manejo de errores
         except Movimiento.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'El pedido no existe en la BD'}, status=404)
         except Motorista.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'El motorista (ID 1) no existe en la BD'}, status=404)
+            return JsonResponse({'status': 'error', 'message': 'El motorista no existe en la BD'}, status=404)
         except Exception as e:
-            # 💡 AQUÍ CAPTURAMOS EL ERROR REAL DE LA BASE DE DATOS
             return JsonResponse({'status': 'error', 'message': f'Error de BD: {str(e)}'}, status=400)
             
     return JsonResponse({'status': 'error', 'message': 'Método HTTP no permitido'}, status=405)
