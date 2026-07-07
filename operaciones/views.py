@@ -11,6 +11,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from rest_framework.decorators import api_view
+from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Incidencia, Movimiento
@@ -386,6 +387,22 @@ def asignar_pedidos(request):
         'pedidos': pedidos_pendientes,
         'motoristas': motoristas_activos
     })
+
+def api_listar_pedidos_activos(request):
+    if request.method == 'GET':
+        # Filtramos los pedidos que están en proceso de entrega
+        pedidos = Movimiento.objects.filter(estado__iexact='En Ruta')
+        
+        data = []
+        for p in pedidos:
+            data.append({
+                'id': p.id,
+                'numero_pedido': p.numero_pedido,
+                'destino': p.direccion_destino,
+                'tipo': p.tipo
+            })
+            
+        return JsonResponse({'status': 'success', 'pedidos': data}, safe=False)
 
 @login_required
 def panel_incidencias(request):

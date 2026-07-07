@@ -24,6 +24,7 @@ urlpatterns = [
     # RUTA DE LA API MÓVIL
     path('api/pedidos/<int:motorista_id>/', views.api_pedidos_motorista, name='api_pedidos_motorista'),
     path('api/login/', views.api_login_motorista, name='api_login_motorista'),
+    path('api/pedidos/activos/', views.api_listar_pedidos_activos, name='api_pedidos_activos'),
     path('asignar-pedidos/', views.asignar_pedidos, name='asignar_pedidos'),
     path('incidencias/', views.listado_incidencias, name='listado_incidencias'),
     path('incidencias/crear/', views.crear_incidencia, name='crear_incidencia'),
