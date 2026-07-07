@@ -12,7 +12,6 @@
     <div id="sidebar">
         <div class="sidebar-brand"><i class="bi bi-box-seam text-primary"></i> LÓGICO</div>
         
-        
         <div class="sidebar-heading">Mantenedores</div>
         <a href="{% url 'farmacias' %}" class="nav-item-custom"><i class="bi bi-building"></i> Gestor Farmacias</a>
         <a href="{% url 'motoristas' %}" class="nav-item-custom"><i class="bi bi-person-badge"></i> Gestor Motoristas</a>
@@ -22,7 +21,7 @@
         <a href="{% url 'asignar_motos' %}" class="nav-item-custom"><i class="bi bi-key"></i> Asignar Motos</a>
         <a href="{% url 'crear_movimiento' %}" class="nav-item-custom"><i class="bi bi-truck"></i> Crear Movimiento</a>
         <a href="{% url 'listado_general' %}" class="nav-item-custom"><i class="bi bi-list-columns-reverse"></i> Listado General</a>
-        <a href="{% url 'listado_incidencias' %}" class="nav-item-custom active"><i class="bi bi-exclamation-triangle"></i> Incidencias</a>
+        <a href="{% url 'listado_incidencias' %}" class="nav-item-custom"><i class="bi bi-exclamation-triangle"></i> Incidencias</a>
                 
         <div class="sidebar-heading">Navegación</div>
         <a href="{% url 'dashboard' %}" class="nav-item-custom"><i class="bi bi-speedometer2"></i> Dashboard</a>
@@ -50,7 +49,7 @@
                                     <th>Modelo</th>
                                     <th>Año</th>
                                     <th>Estado</th>
-                                    <th>Acciones</th>
+                                    <th class="text-end">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -60,22 +59,22 @@
                                     <td>{{ m.marca }}</td>
                                     <td>{{ m.modelo }}</td>
                                     <td>{{ m.anio }}</td>
+                                    <td>
+                                        <span class="badge {% if m.estado == 'Disponible' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                            {{ m.estado }}
+                                        </span>
+                                    </td>
                                     <td class="text-end">
-                                        <button class="btn-icon text-primary" onclick="editarMoto('{{ m.id }}', '{{ m.patente }}', '{{ m.marca|escapejs }}', '{{ m.modelo|escapejs }}', '{{ m.anio }}')">
+                                        <button class="btn-icon text-primary" onclick="editarMoto('{{ m.id }}', '{{ m.patente }}', '{{ m.marca|escapejs }}', '{{ m.modelo|escapejs }}', '{{ m.anio }}', '{{ m.estado }}')">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <a href="{% url 'eliminar_moto' m.id %}" class="btn-icon btn-icon-danger" onclick="return confirm('¿Eliminar la moto patente {{ m.patente }}?');">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </td>
-                                    <td>
-                                        <span class="badge {% if m.estado == 'Disponible' %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                                            {{ m.estado }}
-                                        </span>
-                                        </td>
                                 </tr>
                                 {% empty %}
-                                <tr><td colspan="5" class="text-center text-secondary py-3">No hay motocicletas registradas en la flota.</td></tr>
+                                <tr><td colspan="6" class="text-center text-secondary py-3">No hay motocicletas registradas en la flota.</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -107,9 +106,18 @@
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <label>Año</label>
-                            <input type="number" class="form-control form-control-custom" id="m_anio" name="anio" placeholder="Ej: 2024" min="2000" max="2030" required>
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <label>Año</label>
+                                <input type="number" class="form-control form-control-custom" id="m_anio" name="anio" placeholder="Ej: 2024" min="2000" max="2030" required>
+                            </div>
+                            <div class="col-6">
+                                <label>Estado</label>
+                                <select class="form-select bg-dark text-white border-secondary" id="m_estado" name="estado" required>
+                                    <option value="Disponible">Disponible</option>
+                                    <option value="Mantenimiento">Mantenimiento</option>
+                                </select>
+                            </div>
                         </div>
                         
                         <div class="d-flex gap-2">
@@ -124,12 +132,14 @@
 
     <script src="{% static 'app.js' %}"></script>
     <script>
-        function editarMoto(id, patente, marca, modelo, anio) {
+        // 💡 Se agregó el parámetro 'estado' a la función
+        function editarMoto(id, patente, marca, modelo, anio, estado) {
             document.getElementById('moto_id_edit').value = id;
             document.getElementById('m_patente').value = patente;
             document.getElementById('m_marca').value = marca;
             document.getElementById('m_modelo').value = modelo;
             document.getElementById('m_anio').value = anio;
+            document.getElementById('m_estado').value = estado; // Asigna el estado al selector
 
             document.getElementById('tituloFormulario').innerHTML = '<i class="bi bi-pencil-fill text-warning"></i> Editar Vehículo';
             const btnGuardar = document.getElementById('btnGuardar');
@@ -144,6 +154,7 @@
             document.getElementById('m_marca').value = '';
             document.getElementById('m_modelo').value = '';
             document.getElementById('m_anio').value = '';
+            document.getElementById('m_estado').value = 'Disponible'; // Vuelve al valor por defecto
             
             document.getElementById('tituloFormulario').innerHTML = '<i class="bi bi-plus-circle"></i> Registrar Vehículo';
             const btnGuardar = document.getElementById('btnGuardar');
