@@ -114,7 +114,7 @@
                         <tr>
                             <td><span class="text-secondary">#{{ inc.id }}</span></td>
                             <td><strong>{{ inc.movimiento.numero_pedido }}</strong></td>
-                            <td>{{ inc.motorista.nombre }}</td>
+                            <td>{{ inc.motorista.motorista_perfil.nombre_completo }}</td>
                             <td><span class="text-light">{{ inc.descripcion }}</span></td>
                             <td>
                                 <span class="badge {% if inc.tipo == 'Critica' %}bg-danger{% elif inc.tipo == 'Media' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
