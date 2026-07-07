@@ -21,7 +21,7 @@ from reportlab.lib import colors
 import datetime
 from .models import Incidencia 
 from django.http import HttpResponse
-from .forms import IncidenciaForm
+from .forms import IncidenciaForm, IncidenciaMovilForm
 import random
 
 
@@ -540,3 +540,29 @@ def crear_incidencia(request):
         form = IncidenciaForm()
     
     return render(request, 'crear_incidencia.html', {'form': form})
+
+def crear_incidencia_movil(request):
+    if request.method == 'POST':
+        form = IncidenciaMovilForm(request.POST)
+        if form.is_valid():
+            # 1. Guardamos la incidencia en la base de datos
+            incidencia = form.save(commit=False)
+            
+            # Detectamos si marcó la opción móvil de cliente ausente
+            accion = form.cleaned_data.get('causa_reenvio')
+            if accion == 'cliente_ausente':
+                incidencia.tipo = 'Media' # O la gravedad que definas
+                if not incidencia.descripcion:
+                    incidencia.descripcion = "El cliente no estaba en su casa. Pedido programado para reenvío."
+                
+                # 2. Modificamos el estado del pedido relacionado (Movimiento)
+                pedido = incidencia.movimiento
+                pedido.estado = 'Reenviado' # O 'En Retorno' según tus Choices de Movimiento
+                pedido.save()
+            
+            incidencia.save()
+            return redirect('listado_incidencias')
+    else:
+        form = IncidenciaMovilForm()
+        
+    return render(request, 'crear_incidencia_movil.html', {'form': form})

@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportar Ruta - Lógico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #121212; }
+        .card-movil { background-color: #1e1e1e; border: 1px solid #2d2d2d; border-radius: 12px; }
+    </style>
+</head>
+<body class="p-3">
+
+    <div class="container-fluid m-0 p-0">
+        <div class="d-flex align-items-center mb-4">
+            <a href="{% url 'listado_incidencias' %}" class="btn btn-outline-secondary me-3 btn-sm">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h5 class="text-white mb-0">Reportar Problema en Ruta</h5>
+                <small class="text-secondary">App Motoristas</small>
+            </div>
+        </div>
+
+        <div class="card card-movil p-3 shadow-lg">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-4 p-3 bg-dark rounded border border-warning">
+                    <label class="form-label text-warning small fw-bold text-uppercase">
+                        <i class="bi bi-lightning-charge-fill"></i> ¿Cliente ausente? Márcalo aquí:
+                    </label>
+                    {{ form.causa_reenvio }}
+                </div>
+
+                <hr class="border-secondary my-3">
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase">Selecciona tu Pedido</label>
+                    {{ form.movimiento }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase">Tu Identificador (Motorista)</label>
+                    {{ form.motorista }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase">Severidad Estándar</label>
+                    {{ form.tipo }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase">Comentarios adicionales</label>
+                    {{ form.descripcion }}
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold shadow">
+                        <i class="bi bi-cloud-upload me-2"></i>Enviar Reporte a Base
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('id_causa_reenvio').addEventListener('change', function() {
+            if(this.value === 'cliente_ausente') {
+                document.getElementById('id_tipo').value = 'Media';
+                document.getElementById('id_descripcion').placeholder = 'El cliente no se encontraba en el domicilio indicado.';
+            }
+        });
+    </script>
+</body>
+</html>

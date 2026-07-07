@@ -29,4 +29,5 @@ urlpatterns = [
     path('incidencias/crear/', views.crear_incidencia, name='crear_incidencia'),
     path('api/movimientos/<int:pk>/confirmar/', views.confirmar_entrega, name='api_confirmar_entrega'),
     path('reportes/mensual/pdf/', views.generar_reporte_mensual_pdf, name='descargar_reporte_mensual'),
+    path('incidencias/movil/', views.crear_incidencia_movil, name='crear_incidencia_movil'),
 ]

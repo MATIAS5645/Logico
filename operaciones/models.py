@@ -20,9 +20,21 @@ class Motocicleta(models.Model):
     marca = models.CharField(max_length=50)
     modelo = models.CharField(max_length=50)
     anio = models.IntegerField(verbose_name="Año")
+    ESTADOS_MOTO = [
+        ('Disponible', 'Disponible'),
+        ('Mantenimiento', 'En Mantenimiento'),
+    ]
+
+    # 💡 2. Agregamos la columna con un valor por defecto
+    estado = models.CharField(
+        max_length=20, 
+        choices=ESTADOS_MOTO, 
+        default='Disponible'
+    )
 
     def __str__(self):
-        return f"{self.patente} ({self.marca} {self.modelo})"
+        return f"{self.patente} - {self.marca}"
+
 
 class Motorista(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='motorista_perfil', null=True, blank=True)
