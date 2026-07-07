@@ -596,15 +596,12 @@ def crear_incidencia_movil(request):
             }, status=201)
 
         # Manejo de errores según la documentación
-        except (Movimiento.DoesNotExist, Motorista.DoesNotExist):
-            return JsonResponse({
-                'status': 'error', 
-                'message': 'El ID del movimiento o del motorista provisto no coincide con los registros de la base de datos.'
-            }, status=404)
+        except Movimiento.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'El pedido no existe en la BD'}, status=404)
+        except Motorista.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'El motorista (ID 1) no existe en la BD'}, status=404)
         except Exception as e:
-            return JsonResponse({
-                'status': 'error', 
-                'message': 'Malformación en el archivo JSON o error genérico durante la transacción de almacenamiento.'
-            }, status=400)
+            # 💡 AQUÍ CAPTURAMOS EL ERROR REAL DE LA BASE DE DATOS
+            return JsonResponse({'status': 'error', 'message': f'Error de BD: {str(e)}'}, status=400)
             
     return JsonResponse({'status': 'error', 'message': 'Método HTTP no permitido'}, status=405)
