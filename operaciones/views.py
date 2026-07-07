@@ -557,7 +557,7 @@ def crear_incidencia(request):
         form = IncidenciaForm()
     
     return render(request, 'crear_incidencia.html', {'form': form})
-
+@csrf_exempt
 def crear_incidencia_movil(request):
     if request.method == 'POST':
         form = IncidenciaMovilForm(request.POST)
@@ -582,4 +582,4 @@ def crear_incidencia_movil(request):
     else:
         form = IncidenciaMovilForm()
         
-    return render(request, 'crear_incidencia_movil.html', {'form': form})
+    return JsonResponse({'status': 'success', 'message': 'Guardado'})
