@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -560,26 +562,39 @@ def crear_incidencia(request):
 @csrf_exempt
 def crear_incidencia_movil(request):
     if request.method == 'POST':
-        form = IncidenciaMovilForm(request.POST)
-        if form.is_valid():
-            # 1. Guardamos la incidencia en la base de datos
-            incidencia = form.save(commit=False)
+        try:
+            # 1. Leer el JSON que envió la app de Kotlin
+            data = json.loads(request.body)
+            mov_id = data.get('movimiento_id')
+            motivo = data.get('motivo')
+            descripcion = data.get('descripcion')
+            motorista_id = data.get('motorista_id')
+
+            # 2. Buscar el pedido exacto en la base de datos
+            movimiento = Movimiento.objects.get(id=mov_id)
+
+            # 3. Cambiar el estado del paquete (Esto hará que desaparezca del celular y se vea en la web)
+            # Puedes usar 'Reenviado', 'Incidencia' o el estado exacto que uses en tu sistema
+            movimiento.estado = 'Reenviado' 
+            movimiento.save()
+
+            # 4. Si tienes una tabla/modelo separado para registrar el historial de incidencias, 
+            # debes guardarlo aquí. Si tu modelo se llama de otra forma, ajusta el nombre:
+            """
+            Incidencia.objects.create(
+                movimiento=movimiento,
+                motivo=motivo,
+                descripcion=descripcion,
+                reportado_por_id=motorista_id
+            )
+            """
+
+            # 5. Responder a la app de Android que todo se guardó bien
+            return JsonResponse({'status': 'success', 'message': 'Incidencia registrada en BD'})
+
+        except Movimiento.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'El pedido no existe'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
             
-            # Detectamos si marcó la opción móvil de cliente ausente
-            accion = form.cleaned_data.get('causa_reenvio')
-            if accion == 'cliente_ausente':
-                incidencia.tipo = 'Media' # O la gravedad que definas
-                if not incidencia.descripcion:
-                    incidencia.descripcion = "El cliente no estaba en su casa. Pedido programado para reenvío."
-                
-                # 2. Modificamos el estado del pedido relacionado (Movimiento)
-                pedido = incidencia.movimiento
-                pedido.estado = 'Reenviado' # O 'En Retorno' según tus Choices de Movimiento
-                pedido.save()
-            
-            incidencia.save()
-            return redirect('listado_incidencias')
-    else:
-        form = IncidenciaMovilForm()
-        
-    return JsonResponse({'status': 'success', 'message': 'Guardado'})
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
