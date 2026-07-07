@@ -563,38 +563,48 @@ def crear_incidencia(request):
 def crear_incidencia_movil(request):
     if request.method == 'POST':
         try:
-            # 1. Leer el JSON que envió la app de Kotlin
+            # 1. Leer los datos enviados desde Android
             data = json.loads(request.body)
             mov_id = data.get('movimiento_id')
+            motorista_id = data.get('motorista_id')
             motivo = data.get('motivo')
             descripcion = data.get('descripcion')
-            motorista_id = data.get('motorista_id')
 
-            # 2. Buscar el pedido exacto en la base de datos
+            # 2. Validación de Llaves Foráneas
             movimiento = Movimiento.objects.get(id=mov_id)
+            motorista = Motorista.objects.get(id=motorista_id)
 
-            # 3. Cambiar el estado del paquete (Esto hará que desaparezca del celular y se vea en la web)
-            # Puedes usar 'Reenviado', 'Incidencia' o el estado exacto que uses en tu sistema
-            movimiento.estado = 'Reenviado' 
-            movimiento.save()
+            # 3. Logística Inversa Automática
+            if motivo == "cliente_ausente":
+                movimiento.estado = 'Reenviado'
+                movimiento.save()
 
-            # 4. Si tienes una tabla/modelo separado para registrar el historial de incidencias, 
-            # debes guardarlo aquí. Si tu modelo se llama de otra forma, ajusta el nombre:
-            """
-            Incidencia.objects.create(
+            # 4. Persistencia del Historial (Esto es lo que hace que aparezca en tu web)
+            nueva_incidencia = Incidencia.objects.create(
                 movimiento=movimiento,
+                motorista=motorista,
                 motivo=motivo,
                 descripcion=descripcion,
-                reportado_por_id=motorista_id
+                severidad='Media'
             )
-            """
 
-            # 5. Responder a la app de Android que todo se guardó bien
-            return JsonResponse({'status': 'success', 'message': 'Incidencia registrada en BD'})
+            # 5. Respuesta exitosa HTTP 201 (Created)
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Incidencia registrada y pedido actualizado a Reenviado.',
+                'incidencia_id': nueva_incidencia.id
+            }, status=201)
 
-        except Movimiento.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'El pedido no existe'}, status=404)
+        # Manejo de errores según la documentación
+        except (Movimiento.DoesNotExist, Motorista.DoesNotExist):
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'El ID del movimiento o del motorista provisto no coincide con los registros de la base de datos.'
+            }, status=404)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Malformación en el archivo JSON o error genérico durante la transacción de almacenamiento.'
+            }, status=400)
             
-    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+    return JsonResponse({'status': 'error', 'message': 'Método HTTP no permitido'}, status=405)
